@@ -1,0 +1,36 @@
+plugins {
+    id 'application' //java?
+    id 'org.openjfx.javafxplugin' version '0.0.10'
+}
+
+application{
+    mainClass = "Main"
+}
+
+javafx {
+    version = "17.0.2"
+    modules = [ 'javafx.controls' ]
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation group: 'org.mapeditor', name: 'libtiled', version: '1.4.2'
+    implementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
+    implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
+    implementation ('org.web3j:core:4.8.7')
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.2'
+
+}
+
+test {
+    useJUnitPlatform()
+}
