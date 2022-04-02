@@ -18,4 +18,8 @@ public class StaticValues {
         public static final String BLACK = "#000000";
         public static final String WHITE = "#ffffff";
     }
+
+    //Login page
+    public static final String USERNAME_TF_HINT = "Account Hex Number";
+    public static final String LOGIN_BTN_TEXT = "Enter Haunted Valley";
 }

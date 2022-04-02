@@ -65,4 +65,15 @@ public class ServerPositionBroadcast {
         isWalking = walking;
     }
 
+    @Override
+    public String toString() {
+        return "ServerPositionBroadcast{" +
+                "x=" + x +
+                ", y=" + y +
+                ", mapId='" + mapId + '\'' +
+                ", direction='" + direction + '\'' +
+                ", messageType=" + messageType +
+                ", isWalking=" + isWalking +
+                '}';
+    }
 }

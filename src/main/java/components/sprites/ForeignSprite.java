@@ -12,6 +12,8 @@ import state.AppState;
 import util.CollisionDetection;
 import util.DirectionEnum;
 
+import java.util.Arrays;
+
 //based on https://stackoverflow.com/a/22466969/5354268
 public class ForeignSprite extends AnimationTimer {
 
@@ -88,27 +90,32 @@ public class ForeignSprite extends AnimationTimer {
     private void handleState(long now){
         serverPositionBroadcast = appState.getPlayerServerPosition(foreignSpriteId);
         if(serverPositionBroadcast != null){
-            isWalking = serverPositionBroadcast.isWalking();
-            currentDirection = DirectionEnum.valueOf(serverPositionBroadcast.getDirection());
-            double foreignX = serverPositionBroadcast.getX();
-            double foreignY = serverPositionBroadcast.getY();
 
-            //calculate x and y distance from center
+            try{
+                isWalking = serverPositionBroadcast.isWalking();
+                currentDirection = DirectionEnum.valueOf(serverPositionBroadcast.getDirection());
+                double foreignX = serverPositionBroadcast.getX();
+                double foreignY = serverPositionBroadcast.getY();
 
-            double deltaX = foreignX - appState.getPlayerPos()[0];
-            double deltaY = foreignY - appState.getPlayerPos()[1];
+                //calculate x and y distance from center
 
-            imageView.setTranslateX(deltaX);
-            imageView.setTranslateY(deltaY);
+                double deltaX = foreignX - appState.getPlayerPos()[0];
+                double deltaY = foreignY - appState.getPlayerPos()[1];
 
-            switch (currentDirection){
-                case NORTH -> setSpritesheetRow(1, 4, 400, 599);
-                case SOUTH -> setSpritesheetRow(0, 4, 400, 599);
-                case WEST -> setSpritesheetRow(2, 4, 400, 599);
-                case EAST -> setSpritesheetRow(3, 4, 400, 599);
-                default -> {}
+                imageView.setTranslateX(deltaX);
+                imageView.setTranslateY(deltaY);
+
+                switch (currentDirection){
+                    case NORTH -> setSpritesheetRow(1, 4, 400, 599);
+                    case SOUTH -> setSpritesheetRow(0, 4, 400, 599);
+                    case WEST -> setSpritesheetRow(2, 4, 400, 599);
+                    case EAST -> setSpritesheetRow(3, 4, 400, 599);
+                    default -> {}
+                }
             }
-
+            catch(Exception ex){
+                System.out.println(serverPositionBroadcast.toString());
+            }
 
         }
     }
@@ -169,4 +176,5 @@ public class ForeignSprite extends AnimationTimer {
         foreignSprite.start();
         return foreignSprite;
     }
+
 }

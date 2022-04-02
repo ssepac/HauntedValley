@@ -16,6 +16,8 @@ import javafx.stage.Stage;
 import networking.Account;
 import networking.NetworkAdapter;
 import org.web3j.abi.datatypes.Address;
+import scenes.Game;
+import scenes.Login;
 import state.AppState;
 import util.DirectionEnum;
 
@@ -34,84 +36,26 @@ public class Main extends Application {
 
         try {
 
-            //TODO: Refactor start method
-            //TODO: Make login screen which interfaces with a smart contract
-            appState.setAccount(new Account(new Address("0x97E1B0d15a11912959092635BE9803EDb2398EC3")));
-
-            NetworkAdapter networkAdapter = NetworkAdapter.getInstance();
-            networkAdapter.init("0.0.0.0", 3000, 1000,15);
-
-            //TODO: No hardcoded map logic
-            int mapN = 50*StaticValues.TILE_SIZE;
-            double[] spriteStartCoords = new double[]{mapN/2d, mapN/2d};
-            appState.setPlayerPos(spriteStartCoords);
-            appState.setSpriteWalking(false);
-            appState.setSpriteDirFacing(DirectionEnum.SOUTH);
-            Map tileMap = new Map("map1", mapN, mapN, "src/main/resources/maps/spookyworldmap.tmx");
-            tileMap.start();
-
-            appState.setCollisionPoints(tileMap.getCollisionPoints());
-
-            ImageView spriteView = new ImageView();
-            spriteView.setFitHeight(StaticValues.SPRITE_HEIGHT);
-            spriteView.setFitWidth(StaticValues.SPRITE_WIDTH);
-
-            ControlledSprite sprite = new ControlledSprite(
-                    spriteView,
-                    new Image("/images/spritesheet2.png"),
-                    4,
-                    1,
-                    4,
-                    400,
-                    599,
-                    12
-            );
-            sprite.start();
-            //Creating a Group object
-            Label coordsLabel = new Label();
-            coordsLabel.setPadding(new Insets(16));
-
-            ActivityPane activityPane = new ActivityPane();
-            appState.setActivityPane(activityPane);
-            appState.dispatchActivityPaneMessage("You wake up with a strange feeling...");
-
-            StackPane root = new StackPane(tileMap.getTileGroup(), spriteView, coordsLabel, activityPane);
-            root.setStyle("-fx-background-color: #000");
-            appState.setSceneRoot(root);
-
-            StackPane.setAlignment(spriteView, Pos.CENTER);
-            StackPane.setAlignment(coordsLabel, Pos.BOTTOM_RIGHT);
-            StackPane.setAlignment(activityPane, Pos.BOTTOM_CENTER);
-
-            //Creating a scene object
-            Scene scene = new Scene(root, StaticValues.APP_WIDTH, StaticValues.APP_HEIGHT);
-
-            scene.setOnKeyPressed(sprite.onKeyPress);
-            scene.setOnKeyReleased(sprite.onKeyReleased);
-
             //Setting title to the Stage
             stage.setTitle(StaticValues.APP_NAME);
 
             //Adding scene to the stage
-            stage.setScene(scene);
+            stage.setScene(Login.generateLoginScreen((account)->{
+                try {
+                    appState.setAccount(new Account(new Address(account)));
+                    stage.setScene(Game.generateGameScene());
+                    return null;
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                    return "Invalid account number";
+                }
+                catch (Exception ex){
+                    return "There was an issue logging in";
+                }
+            }));
 
             //Displaying the contents of the stage
             stage.show();
-
-            //Update UI 30 frames/sec
-            new Thread(() -> {
-                while (true) {
-                    try {
-                        Platform.runLater(() -> coordsLabel.setText(df.format(appState.getPlayerPos()[0]) + ", " + df.format(appState.getPlayerPos()[1])));
-                        Thread.sleep(33);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }
-            }).start();
-
-            networkAdapter.initClientHeartbeat();
-            networkAdapter.initServerListener();
         }
         catch(Exception ex){
             ex.printStackTrace();
