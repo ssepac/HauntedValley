@@ -28,12 +28,10 @@ public class Map extends AnimationTimer {
     private static AppState appState;
     private final double[] initialCoords;
     private final HashSet<Point> collisionPoints;
-    private int mapWidth, mapHeight;
 
-    public Map(int mapWidth, int mapHeight, String uri) throws Exception{
+    public Map(String mapId, int mapWidth, int mapHeight, String uri) throws Exception{
         appState = AppState.getInstance();
-        this.mapWidth = mapWidth;
-        this.mapHeight = mapHeight;
+        appState.setActiveMap(mapId);
         TMXMapReader mapReader = new TMXMapReader();
         List<WrappedTile> wrappedTileList;
         initialCoords = appState.getPlayerPos();

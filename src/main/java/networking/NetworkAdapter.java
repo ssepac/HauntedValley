@@ -1,18 +1,20 @@
 package networking;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import state.AppState;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.*;
+import java.util.HashMap;
 
 public class NetworkAdapter {
 
-    ObjectMapper mapper;
-    private byte[] buf;
-    private volatile int numberRetries;
+    Gson gson;
+    private byte[] sendBuf, recvBuf;
     private DatagramSocket socket;
     private InetAddress address;
     private String host;
@@ -21,8 +23,8 @@ public class NetworkAdapter {
     /**requests per second*/
     private int rps;
     private static final NetworkAdapter INSTANCE = new NetworkAdapter();
-    private static final AppState appState = AppState.getInstance();
-    private static volatile boolean heartBeatActive;
+    private static final AppState APP_STATE = AppState.getInstance();
+    private static final Type PLAYER_COORDINATE_MAP_TYPE = new TypeToken<HashMap<String, ServerPositionBroadcast>>() {}.getType();
     private NetworkAdapter() {}
 
     public void init(String host, int port, int timeout, int rps) throws SocketException, UnknownHostException {
@@ -33,7 +35,8 @@ public class NetworkAdapter {
         socket = new DatagramSocket();
         //socket.setSoTimeout(timeout);
         address = InetAddress.getByName(host);
-        mapper = new ObjectMapper();
+        gson = new Gson();
+        recvBuf = new byte[(2<<15)-1]; //65,535B max UDP packet size
     }
 
     public static NetworkAdapter getInstance(){
@@ -41,9 +44,9 @@ public class NetworkAdapter {
     }
 
     public void sendEcho(String msg) throws IOException {
-        buf = msg.getBytes();
+        sendBuf = msg.getBytes();
         DatagramPacket packet
-                = new DatagramPacket(buf, buf.length, address, port);
+                = new DatagramPacket(sendBuf, sendBuf.length, address, port);
         socket.send(packet);
     }
 
@@ -51,11 +54,12 @@ public class NetworkAdapter {
         new Thread(() -> {
             while (true) {
                 try {
-                    DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                    DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
                     socket.receive(packet);
                     String received = new String(
                             packet.getData(), 0, packet.getLength());
-                    System.out.println("from server:" + received);
+                    HashMap<String, ServerPositionBroadcast> result = gson.fromJson(received, PLAYER_COORDINATE_MAP_TYPE);
+                    APP_STATE.setPlayerCoordsMap(result);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -63,89 +67,40 @@ public class NetworkAdapter {
         }).start();
     }
 
-    //TODO: Update beginHeartBeat to receive an ACK from the server every 10 seconds.
     public void initClientHeartbeat(){
-        heartBeatActive = true;
-        numberRetries = 0;
 
         new Thread(() -> {
-            while(heartBeatActive && numberRetries <= 10){
+            while(true){
                 try{
                     Platform.runLater(() -> {
                         try {
-                            double xCoord = appState.getPlayerPos()[0];
-                            double yCoord = appState.getPlayerPos()[1];
-                            String address = appState.getAccount().getAddress().toString();
-                            NetworkAdapter.getInstance().sendEcho(toJson(new HeartbeatClient(address, xCoord, yCoord)));
+                            double xCoord = APP_STATE.getPlayerPos()[0];
+                            double yCoord = APP_STATE.getPlayerPos()[1];
+                            String address = APP_STATE.getAccount().getAddress().toString();
+                            NetworkAdapter.getInstance().sendEcho(clientMessageToJson(new PositionMessage(address, xCoord, yCoord, APP_STATE.getActiveMap(), APP_STATE.getSpriteDirFacing(), APP_STATE.getSpriteWalking())));
                         } catch (IOException e) {
                             e.printStackTrace();
-                            incrementRetries();
                         }
                     });
-                    Thread.sleep(NetworkAdapter.getInstance().getRps()* 1000L);
+                    Thread.sleep(1000L/NetworkAdapter.getInstance().getRps());
                 }
                 catch (Exception ex){
                     ex.printStackTrace();
-                    incrementRetries();
-
-                    if(numberRetries > 10){
-                        heartBeatActive = false;
-                    }
                 }
             }
-            System.out.println("Stopping network adapter heart beat.");
         }).start();
-    }
-
-    private synchronized void incrementRetries(){
-        numberRetries++;
     }
 
     public void close() {
         socket.close();
     }
-
-    public InetAddress getAddress() {
-        return address;
-    }
-
-    public void setAddress(InetAddress address) {
-        this.address = address;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public int getTimeout() {
-        return timeout;
-    }
-
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
-    }
-
     public int getRps() {
         return rps;
     }
 
-    public void setRps(int rps) {
-        this.rps = rps;
-    }
 
-    public String toJson(Object object) throws JsonProcessingException {
-        return mapper.writeValueAsString(object);
+    public String clientMessageToJson(AbstractClientMessage object) throws JsonProcessingException {
+
+        return gson.toJson(object);
     }
 }

@@ -1,22 +1,33 @@
 package state;
 
 
+import components.sprites.ForeignSprite;
 import controls.ActivityPane;
+import javafx.application.Platform;
 import javafx.scene.layout.StackPane;
 import networking.Account;
-import org.mapeditor.core.Tile;
+import networking.PositionMessage;
+import networking.ServerPositionBroadcast;
+import util.DirectionEnum;
 
 import java.awt.*;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 public class AppState {
+
+    //needed to add new sprites
+    private StackPane sceneRoot;
+    private HashMap<String, ServerPositionBroadcast> playerCoordsMap;
+    private ArrayList<ForeignSprite> foreignSpriteList;
 
     private static AppState INSTANCE;
     private double[] playerPos;
     private HashSet<Point> collisionPoints;
     private ActivityPane activityPane;
     private Account account;
+    private boolean spriteWalking;
+    private DirectionEnum spriteDirFacing;
+    private String activeMap;
 
     private AppState(){
     }
@@ -28,16 +39,38 @@ public class AppState {
     public static AppState getInstance(){
         if(INSTANCE == null) {
             INSTANCE = new AppState();
+            INSTANCE.playerCoordsMap = new HashMap<>();
+            INSTANCE.foreignSpriteList = new ArrayList<>();
         }
         return INSTANCE;
     }
 
-    public void setCollisionPoints(HashSet<Point> collisionPoints) {
-        this.collisionPoints = collisionPoints;
+    public DirectionEnum getSpriteDirFacing() {
+        return spriteDirFacing;
     }
 
-    public ActivityPane getActivityPane() {
-        return activityPane;
+    public void setSpriteDirFacing(DirectionEnum spriteDirFacing) {
+        this.spriteDirFacing = spriteDirFacing;
+    }
+
+    public boolean getSpriteWalking() {
+        return spriteWalking;
+    }
+
+    public void setSpriteWalking(boolean spriteWalking) {
+        this.spriteWalking = spriteWalking;
+    }
+
+    public String getActiveMap() {
+        return activeMap;
+    }
+
+    public void setActiveMap(String activeMap) {
+        this.activeMap = activeMap;
+    }
+
+    public void setCollisionPoints(HashSet<Point> collisionPoints) {
+        this.collisionPoints = collisionPoints;
     }
 
     public void setActivityPane(ActivityPane activityPane) {
@@ -64,5 +97,27 @@ public class AppState {
 
     public void setAccount(Account account) {
         this.account = account;
+    }
+
+    public void setSceneRoot(StackPane sceneRoot) {
+        this.sceneRoot = sceneRoot;
+    }
+
+    //Called when a broadcast is received from the server.
+    public void setPlayerCoordsMap(HashMap<String, ServerPositionBroadcast> map){
+
+        for(Map.Entry<String, ServerPositionBroadcast> entry : map.entrySet()){
+            //Add player to map if client seeing them for first time, with the exclusion of oneself.
+            if(!playerCoordsMap.containsKey(entry.getKey()) && !Objects.equals(entry.getKey(), account.getAddress().getValue())){
+                ForeignSprite newForeignSprite = ForeignSprite.generateForeignSprite(entry.getKey());
+                foreignSpriteList.add(newForeignSprite);
+                Platform.runLater(()->sceneRoot.getChildren().add(newForeignSprite.getImageView()));
+            }
+            playerCoordsMap.put(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public ServerPositionBroadcast getPlayerServerPosition(String id){
+        return playerCoordsMap.get(id);
     }
 }

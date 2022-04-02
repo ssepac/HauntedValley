@@ -1,5 +1,6 @@
 import components.maps.Map;
-import components.sprites.Sprite;
+import components.sprites.ControlledSprite;
+import components.sprites.ForeignSprite;
 import config.StaticValues;
 import controls.ActivityPane;
 import javafx.application.Application;
@@ -16,6 +17,7 @@ import networking.Account;
 import networking.NetworkAdapter;
 import org.web3j.abi.datatypes.Address;
 import state.AppState;
+import util.DirectionEnum;
 
 import static config.StaticValues.df;
 
@@ -37,12 +39,15 @@ public class Main extends Application {
             appState.setAccount(new Account(new Address("0x97E1B0d15a11912959092635BE9803EDb2398EC3")));
 
             NetworkAdapter networkAdapter = NetworkAdapter.getInstance();
-            networkAdapter.init("0.0.0.0", 41234, 1000,1);
+            networkAdapter.init("0.0.0.0", 3000, 1000,15);
 
-            int mapN = 32*StaticValues.TILE_SIZE;
+            //TODO: No hardcoded map logic
+            int mapN = 50*StaticValues.TILE_SIZE;
             double[] spriteStartCoords = new double[]{mapN/2d, mapN/2d};
             appState.setPlayerPos(spriteStartCoords);
-            Map tileMap = new Map(mapN, mapN, "src/main/resources/maps/spookyworldmap.tmx");
+            appState.setSpriteWalking(false);
+            appState.setSpriteDirFacing(DirectionEnum.SOUTH);
+            Map tileMap = new Map("map1", mapN, mapN, "src/main/resources/maps/spookyworldmap.tmx");
             tileMap.start();
 
             appState.setCollisionPoints(tileMap.getCollisionPoints());
@@ -51,7 +56,7 @@ public class Main extends Application {
             spriteView.setFitHeight(StaticValues.SPRITE_HEIGHT);
             spriteView.setFitWidth(StaticValues.SPRITE_WIDTH);
 
-            Sprite sprite = new Sprite(
+            ControlledSprite sprite = new ControlledSprite(
                     spriteView,
                     new Image("/images/spritesheet2.png"),
                     4,
@@ -72,6 +77,7 @@ public class Main extends Application {
 
             StackPane root = new StackPane(tileMap.getTileGroup(), spriteView, coordsLabel, activityPane);
             root.setStyle("-fx-background-color: #000");
+            appState.setSceneRoot(root);
 
             StackPane.setAlignment(spriteView, Pos.CENTER);
             StackPane.setAlignment(coordsLabel, Pos.BOTTOM_RIGHT);

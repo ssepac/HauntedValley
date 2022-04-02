@@ -6,13 +6,12 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import networking.NetworkAdapter;
 import state.AppState;
 import util.CollisionDetection;
 import util.DirectionEnum;
 
 //based on https://stackoverflow.com/a/22466969/5354268
-public class Sprite extends AnimationTimer {
+public class ControlledSprite extends AnimationTimer {
 
     private final ImageView imageView; //Image view that will display our sprite
 
@@ -31,19 +30,19 @@ public class Sprite extends AnimationTimer {
     private long lastFrame = 0;
 
     //movement variables
-    private boolean isWalking = false;
-    private DirectionEnum currentDirection = DirectionEnum.SOUTH;
+    private boolean isWalking;
+    private DirectionEnum currentDirection;
     private double[] coords;
     private final static AppState appState = AppState.getInstance();
 
-    public Sprite(ImageView imageView,
-                  Image image,
-                  int columns,
-                  int rows,
-                  int totalFrames,
-                  int frameWidth,
-                  int frameHeight,
-                  float framesPerSecond
+    public ControlledSprite(ImageView imageView,
+                            Image image,
+                            int columns,
+                            int rows,
+                            int totalFrames,
+                            int frameWidth,
+                            int frameHeight,
+                            float framesPerSecond
     ) {
         this.imageView = imageView;
         imageView.setImage(image);
@@ -58,10 +57,8 @@ public class Sprite extends AnimationTimer {
         lastFrame = System.nanoTime();
 
         coords = new double[]{appState.getPlayerPos()[0], appState.getPlayerPos()[1]};
-    }
-
-    public double[] getCoords() {
-        return coords;
+        isWalking = false;
+        currentDirection=DirectionEnum.SOUTH;
     }
 
     public void setCurrentDirection(DirectionEnum currentDirection) {
@@ -79,30 +76,42 @@ public class Sprite extends AnimationTimer {
         isWalking = walking;
     }
 
+    /** Changes the animation on key press */
     public javafx.event.EventHandler<? super javafx.scene.input.KeyEvent> onKeyPress = e -> {
         if (e.getCode() == KeyCode.UP) {
             setWalking(true);
+            appState.setSpriteWalking(true);
             setCurrentDirection(DirectionEnum.NORTH);
+            appState.setSpriteDirFacing(DirectionEnum.NORTH);
             setSpritesheetRow(1, 4, 400, 599);
         }
         if (e.getCode() == KeyCode.DOWN) {
             setWalking(true);
+            appState.setSpriteWalking(true);
             setCurrentDirection(DirectionEnum.SOUTH);
+            appState.setSpriteDirFacing(DirectionEnum.SOUTH);
             setSpritesheetRow(0, 4, 400, 599);
         }
         if (e.getCode() == KeyCode.LEFT) {
             setWalking(true);
+            appState.setSpriteWalking(true);
             setCurrentDirection(DirectionEnum.WEST);
+            appState.setSpriteDirFacing(DirectionEnum.WEST);
             setSpritesheetRow(2, 4, 400, 599);
         }
         if (e.getCode() == KeyCode.RIGHT) {
             setWalking(true);
+            appState.setSpriteWalking(true);
             setCurrentDirection(DirectionEnum.EAST);
+            appState.setSpriteDirFacing(DirectionEnum.EAST);
             setSpritesheetRow(3, 4, 400, 599);
         }
     };
 
-    public javafx.event.EventHandler<? super javafx.scene.input.KeyEvent> onKeyReleased = e -> setWalking(false);
+    public javafx.event.EventHandler<? super javafx.scene.input.KeyEvent> onKeyReleased = e -> {
+        setWalking(false);
+        appState.setSpriteWalking(false);
+    };
 
     @Override
     public void handle(long now) {

@@ -37,8 +37,8 @@ public class CollisionDetection {
         }
 
         int[] newCoords = new int[]{((int)(coords[0]/32.0))*32, ((int)(coords[1]/32.0))*32};
-        System.out.println(Arrays.toString(newCoords));
-        System.out.println(illegalPoints);
+        //System.out.println(Arrays.toString(newCoords));
+        //System.out.println(illegalPoints);
         return illegalPoints.contains(new Point(newCoords[0], newCoords[1]));
     }
 }
