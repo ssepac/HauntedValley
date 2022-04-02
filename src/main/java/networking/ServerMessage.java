@@ -1,6 +1,6 @@
 package networking;
 
-public class ServerPositionBroadcast {
+public class ServerMessage {
     private double x;
     private double y;
     private String mapId;
@@ -8,7 +8,7 @@ public class ServerPositionBroadcast {
     private MessageTypesEnum messageType;
     private boolean isWalking;
 
-    public ServerPositionBroadcast(double x, double y, String mapId, String direction, MessageTypesEnum messageType, boolean isWalking) {
+    public ServerMessage(double x, double y, String mapId, String direction, MessageTypesEnum messageType, boolean isWalking) {
         this.x = x;
         this.y = y;
         this.mapId = mapId;

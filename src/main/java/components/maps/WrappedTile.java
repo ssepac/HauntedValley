@@ -5,6 +5,7 @@ import org.mapeditor.core.Tile;
 
 import java.awt.*;
 
+/** A bundle that includes a Tiled Tile, associated ImageView, and its onclick listener */
 public class WrappedTile {
 
     private final ImageView imageView;

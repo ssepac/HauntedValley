@@ -29,10 +29,8 @@ public class Game {
 
     public static Scene generateGameScene() throws Exception {
 
-        appState.setAccount(new Account(new Address("0x97E1B0d15a11912959092635BE9803EDb2398EC3")));
-
         NetworkAdapter networkAdapter = NetworkAdapter.getInstance();
-        networkAdapter.init("192.168.0.24", 3000, 1000,15);
+        networkAdapter.init(StaticValues.SERVER_HOST, StaticValues.SERVER_PORT, StaticValues.CLIENT_BROADCAST_RATE);
 
         int mapN = 50* StaticValues.TILE_SIZE;
         double[] spriteStartCoords = new double[]{mapN/2d, mapN/2d};
@@ -81,22 +79,24 @@ public class Game {
         scene.setOnKeyPressed(sprite.onKeyPress);
         scene.setOnKeyReleased(sprite.onKeyReleased);
 
-        //Update UI 30 frames/sec
+        initCoordsOnMap(coordsLabel, 33);
+        networkAdapter.initClientHeartbeat();
+        networkAdapter.initServerListener();
+
+        return scene;
+    }
+
+    private static void initCoordsOnMap(Label label, int updateRate){
         new Thread(() -> {
             while (true) {
                 try {
-                    Platform.runLater(() -> coordsLabel.setText(df.format(appState.getPlayerPos()[0]) + ", " + df.format(appState.getPlayerPos()[1])));
-                    Thread.sleep(33);
+                    Platform.runLater(() -> label.setText(df.format(appState.getPlayerPos()[0]) + ", " + df.format(appState.getPlayerPos()[1])));
+                    Thread.sleep(updateRate);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             }
         }).start();
-
-        networkAdapter.initClientHeartbeat();
-        networkAdapter.initServerListener();
-
-        return scene;
     }
 
 }

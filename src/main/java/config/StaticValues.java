@@ -22,4 +22,9 @@ public class StaticValues {
     //Login page
     public static final String USERNAME_TF_HINT = "Account Hex Number";
     public static final String LOGIN_BTN_TEXT = "Enter Haunted Valley";
+
+    //Server connection info
+    public static final String SERVER_HOST = "67.166.25.40";
+    public static final int SERVER_PORT = 3000;
+    public static final int CLIENT_BROADCAST_RATE = 15;
 }

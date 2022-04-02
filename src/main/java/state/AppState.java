@@ -6,8 +6,7 @@ import controls.ActivityPane;
 import javafx.application.Platform;
 import javafx.scene.layout.StackPane;
 import networking.Account;
-import networking.PositionMessage;
-import networking.ServerPositionBroadcast;
+import networking.ServerMessage;
 import util.DirectionEnum;
 
 import java.awt.*;
@@ -17,8 +16,8 @@ public class AppState {
 
     //needed to add new sprites
     private StackPane sceneRoot;
-    private HashMap<String, ServerPositionBroadcast> playerCoordsMap;
-    private ArrayList<ForeignSprite> foreignSpriteList;
+    private HashMap<String, ServerMessage> playerCoordsMap;
+    private HashMap<String, ForeignSprite> sprites;
 
     private static AppState INSTANCE;
     private double[] playerPos;
@@ -40,7 +39,7 @@ public class AppState {
         if(INSTANCE == null) {
             INSTANCE = new AppState();
             INSTANCE.playerCoordsMap = new HashMap<>();
-            INSTANCE.foreignSpriteList = new ArrayList<>();
+            INSTANCE.sprites = new HashMap<>();
         }
         return INSTANCE;
     }
@@ -104,20 +103,20 @@ public class AppState {
     }
 
     //Called when a broadcast is received from the server.
-    public void setPlayerCoordsMap(HashMap<String, ServerPositionBroadcast> map){
+    public void setPlayerCoordsMap(HashMap<String, ServerMessage> map){
 
-        for(Map.Entry<String, ServerPositionBroadcast> entry : map.entrySet()){
+        for(Map.Entry<String, ServerMessage> entry : map.entrySet()){
             //Add player to map if client seeing them for first time, with the exclusion of oneself.
             if(!playerCoordsMap.containsKey(entry.getKey()) && !Objects.equals(entry.getKey(), account.getAddress().getValue())){
                 ForeignSprite newForeignSprite = ForeignSprite.generateForeignSprite(entry.getKey());
-                foreignSpriteList.add(newForeignSprite);
+                sprites.put(entry.getKey(), newForeignSprite);
                 Platform.runLater(()->sceneRoot.getChildren().add(newForeignSprite.getImageView()));
             }
             playerCoordsMap.put(entry.getKey(), entry.getValue());
         }
     }
 
-    public ServerPositionBroadcast getPlayerServerPosition(String id){
+    public ServerMessage getPlayerServerPosition(String id){
         return playerCoordsMap.get(id);
     }
 }

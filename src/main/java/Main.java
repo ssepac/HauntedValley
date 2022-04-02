@@ -1,27 +1,11 @@
-import components.maps.Map;
-import components.sprites.ControlledSprite;
-import components.sprites.ForeignSprite;
 import config.StaticValues;
-import controls.ActivityPane;
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import networking.Account;
-import networking.NetworkAdapter;
 import org.web3j.abi.datatypes.Address;
 import scenes.Game;
 import scenes.Login;
 import state.AppState;
-import util.DirectionEnum;
-
-import static config.StaticValues.df;
 
 public class Main extends Application {
 

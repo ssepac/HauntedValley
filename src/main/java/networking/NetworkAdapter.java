@@ -11,29 +11,25 @@ import java.lang.reflect.Type;
 import java.net.*;
 import java.util.HashMap;
 
+/** Contains helper methods for sending/receiving data via UDP to/from the server. */
 public class NetworkAdapter {
 
-    Gson gson;
-    private byte[] sendBuf, recvBuf;
+    private Gson gson;
+    private byte[] recvBuf;
     private DatagramSocket socket;
     private InetAddress address;
-    private String host;
     private int port;
-    private int timeout;
     /**requests per second*/
     private int rps;
     private static final NetworkAdapter INSTANCE = new NetworkAdapter();
     private static final AppState APP_STATE = AppState.getInstance();
-    private static final Type PLAYER_COORDINATE_MAP_TYPE = new TypeToken<HashMap<String, ServerPositionBroadcast>>() {}.getType();
+    private static final Type PLAYER_COORDINATE_MAP_TYPE = new TypeToken<HashMap<String, ServerMessage>>() {}.getType();
     private NetworkAdapter() {}
 
-    public void init(String host, int port, int timeout, int rps) throws SocketException, UnknownHostException {
-        INSTANCE.host = host;
+    public void init(String host, int port, int rps) throws SocketException, UnknownHostException {
         INSTANCE.port = port;
         INSTANCE.rps = rps;
-        INSTANCE.timeout = timeout;
         socket = new DatagramSocket();
-        //socket.setSoTimeout(timeout);
         address = InetAddress.getByName(host);
         gson = new Gson();
         recvBuf = new byte[(2<<15)-1]; //65,535B max UDP packet size
@@ -43,13 +39,15 @@ public class NetworkAdapter {
         return INSTANCE;
     }
 
+    /** Sends a string to the server */
     public void sendEcho(String msg) throws IOException {
-        sendBuf = msg.getBytes();
+        byte[] sendBuf = msg.getBytes();
         DatagramPacket packet
                 = new DatagramPacket(sendBuf, sendBuf.length, address, port);
         socket.send(packet);
     }
 
+    /** Listens to server for info such as position updates. */
     public void initServerListener() {
         new Thread(() -> {
             while (true) {
@@ -58,7 +56,7 @@ public class NetworkAdapter {
                     socket.receive(packet);
                     String received = new String(
                             packet.getData(), 0, packet.getLength());
-                    HashMap<String, ServerPositionBroadcast> result = gson.fromJson(received, PLAYER_COORDINATE_MAP_TYPE);
+                    HashMap<String, ServerMessage> result = gson.fromJson(received, PLAYER_COORDINATE_MAP_TYPE);
                     APP_STATE.setPlayerCoordsMap(result);
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -67,6 +65,7 @@ public class NetworkAdapter {
         }).start();
     }
 
+    /** Updates server on an interval with information. The server uses this heartbeat to assess if the client is still connected.*/
     public void initClientHeartbeat(){
 
         new Thread(() -> {
@@ -82,7 +81,7 @@ public class NetworkAdapter {
                             e.printStackTrace();
                         }
                     });
-                    Thread.sleep(1000L/NetworkAdapter.getInstance().getRps());
+                    Thread.sleep(1000L/NetworkAdapter.getInstance().rps);
                 }
                 catch (Exception ex){
                     ex.printStackTrace();
@@ -94,13 +93,9 @@ public class NetworkAdapter {
     public void close() {
         socket.close();
     }
-    public int getRps() {
-        return rps;
-    }
 
-
+    /** Converts a message from the client into JSON using GSON. */
     public String clientMessageToJson(AbstractClientMessage object) throws JsonProcessingException {
-
         return gson.toJson(object);
     }
 }
